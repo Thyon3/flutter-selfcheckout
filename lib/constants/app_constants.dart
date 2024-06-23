@@ -5,8 +5,8 @@ class AppConstants {
   static const String appDescription = 'Self-Checkout Mobile Application';
   
   // Colors
-  static const Color primaryColor = Color(0xff1faa00);
-  static const Color accentColor = Color(0xffD50000);
+  static const int primaryColorValue = 0xff1faa00;
+  static const int accentColorValue = 0xffD50000;
   static const Color backgroundColor = Color(0xfff5f5f5);
   static const Color cardColor = Colors.white;
   
@@ -16,9 +16,9 @@ class AppConstants {
   static const double largePadding = 24.0;
   
   // Animation Durations
-  static const Duration shortAnimation = Duration(milliseconds: 200);
-  static const Duration mediumAnimation = Duration(milliseconds: 300);
-  static const Duration longAnimation = Duration(milliseconds: 500);
+  static const int shortAnimationMs = 200;
+  static const int mediumAnimationMs = 300;
+  static const int longAnimationMs = 500;
   
   // Text Styles
   static const double titleFontSize = 22.0;
@@ -47,15 +47,15 @@ class AppConstants {
   static const double maxItemPrice = 999999.99;
   
   // Session Management
-  static const Duration sessionTimeout = Duration(minutes: 30);
-  static const Duration activityTimeout = Duration(minutes: 5);
+  static const int sessionTimeoutMinutes = 30;
+  static const int activityTimeoutMinutes = 5;
   
   // Pagination
   static const int defaultPageSize = 20;
   static const int maxPageSize = 100;
   
   // File Upload
-  static const int maxFileSize = 5 * 1024 * 1024; // 5MB
+  static const int maxFileSizeBytes = 5 * 1024 * 1024; // 5MB
   static const List<String> allowedImageFormats = ['jpg', 'jpeg', 'png', 'gif'];
   
   // Error Messages
