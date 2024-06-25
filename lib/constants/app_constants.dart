@@ -73,4 +73,8 @@ class AppConstants {
   static const bool enableDarkMode = true;
   static const bool enableNotifications = true;
   static const bool enableAnalytics = true;
+  
+  // New: App Store Configuration
+  static const String appStoreUrl = 'https://play.google.com/store/apps/details?id=com.scango.app';
+  static const String appStoreId = 'com.scango.app';
 }
