@@ -19,7 +19,7 @@ A comprehensive Flutter application for self-service shopping with barcode scann
 
 ### Prerequisites
 
-- Flutter SDK (>= 2.5.0)
+- Flutter SDK (>= 2.7.0)
 - Dart SDK (>= 2.14.0)
 - Android Studio / VS Code with Flutter extension
 - Firebase project configuration
@@ -28,7 +28,7 @@ A comprehensive Flutter application for self-service shopping with barcode scann
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/Thyon3/flutter_self_checkout.git
 cd flutter_selfcheckout
 ```
 
