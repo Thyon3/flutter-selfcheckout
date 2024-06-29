@@ -37,4 +37,8 @@ class DateUtils {
     final yesterday = DateTime.now().subtract(Duration(days: 1));
     return date.year == yesterday.year && date.month == yesterday.month && date.day == yesterday.day;
   }
+
+  static String getFormattedDateRange(DateTime startDate, DateTime endDate) {
+    return '${formatDate(startDate)} - ${formatDate(endDate)}';
+  }
 }
