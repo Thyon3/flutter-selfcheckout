@@ -48,4 +48,10 @@ class ValidationUtils {
   static String sanitizeForDisplay(String input) {
     return ValidationService.sanitizeForDisplay(input);
   }
+  
+  // New: Email validation
+  static bool isValidEmailFormat(String email) {
+    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    return emailRegex.hasMatch(email);
+  }
 }
