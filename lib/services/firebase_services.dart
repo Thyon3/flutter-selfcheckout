@@ -1,10 +1,67 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-class FirebaseServices{
+class FirebaseServices {
 
-  FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-  FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
+
+  // Authentication
+  Future<User?> signInWithEmailAndPassword(String email, String password) async {
+    try {
+      UserCredential result = await _firebaseAuth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return result.user;
+    } catch (e) {
+      print('Sign in error: $e');
+      return null;
+    }
+  }
+
+  Future<User?> createUserWithEmailAndPassword(String email, String password) async {
+    try {
+      UserCredential result = await _firebaseAuth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return result.user;
+    } catch (e) {
+      print('Create user error: $e');
+      return null;
+    }
+  }
+
+  Future<void> signOut() async {
+    try {
+      await _firebaseAuth.signOut();
+    } catch (e) {
+      print('Sign out error: $e');
+    }
+  }
+
+  // Database
+  Future<void> saveUserData(String userId, Map<String, dynamic> userData) async {
+    try {
+      await _firebaseFirestore.collection('users').doc(userId).set(userData);
+    } catch (e) {
+      print('Save user data error: $e');
+    }
+  }
+
+  Future<DocumentSnapshot> getUserData(String userId) async {
+    try {
+      return await _firebaseFirestore.collection('users').doc(userId).get();
+    } catch (e) {
+      print('Get user data error: $e');
+      rethrow;
+    }
+  }
+
+  // Get current user
+  User? get currentUser => _firebaseAuth.currentUser;
+  String? get userId => _firebaseAuth.currentUser?.uid;
 
   String getUserId() {
     return _firebaseAuth.currentUser.uid;
