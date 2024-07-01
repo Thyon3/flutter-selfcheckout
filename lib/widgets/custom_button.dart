@@ -1,29 +1,33 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:selfcheckoutapp/constants.dart';
 
 //CUSTOM BUTTONS TO LOGIN AND REGISTER PAGES / WHITE - GREEN
 class CustomBtn extends StatelessWidget {
   final String text;
-  final Function onPressed;
+  final VoidCallback onPressed;
   final bool outlineBtn;
   final bool isLoading;
 
-  const CustomBtn(
-      {Key key, this.text, this.onPressed, this.outlineBtn, this.isLoading})
-      : super(key: key);
+  CustomBtn({
+    required this.text,
+    required this.onPressed,
+    this.outlineBtn = false,
+    this.isLoading = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    bool _outlineBtn = outlineBtn ?? false;
-    bool _isLoading = isLoading ?? false;
+    bool isOutlineBtn = outlineBtn ?? false;
+    bool isButtonLoading = isLoading ?? false;
 
     return GestureDetector(
-      onTap: onPressed,
+      onTap: isButtonLoading ? null : onPressed,
       child: Container(
-        height: 60.0,
+        height: 65.0,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: _outlineBtn ? Colors.transparent : Color(0xff1faa00),
+          color: isOutlineBtn ? Colors.transparent : Color(0xff1faa00),
           border: Border.all(
             color: Color(0xff1faa00),
             width: 2.0,
@@ -37,27 +41,30 @@ class CustomBtn extends StatelessWidget {
         child: Stack(
           children: [
             Visibility(
-              visible: _isLoading ? false : true,
+              visible: !isButtonLoading,
               child: Center(
                 child: Text(
-                  text ?? "Text",
+                  text,
                   style: TextStyle(
+                    color: isOutlineBtn ? Color(0xff1faa00) : Colors.white,
+                    fontWeight: FontWeight.bold,
                     fontSize: 16.0,
-                    color: _outlineBtn ? Color(0xff1faa00) : Colors.white,
-                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ),
             Visibility(
-              visible: _isLoading,
+              visible: isButtonLoading,
               child: Center(
                 child: SizedBox(
-                    width: 30.0,
-                    height: 30.0,
-                    child: CircularProgressIndicator(
-                      backgroundColor: Colors.white,
-                    )),
+                  height: 30.0,
+                  width: 30.0,
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      isOutlineBtn ? Color(0xff1faa00) : Colors.white,
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
@@ -70,32 +77,35 @@ class CustomBtn extends StatelessWidget {
 //WHITE - BLUE
 class CustomEditBtn extends StatelessWidget {
   final String text;
-  final Function onPressed;
+  final VoidCallback onPressed;
   final bool outlineBtn;
   final bool isLoading;
 
-  const CustomEditBtn(
-      {Key key, this.text, this.onPressed, this.outlineBtn, this.isLoading})
-      : super(key: key);
+  CustomEditBtn({
+    required this.text,
+    required this.onPressed,
+    this.outlineBtn = false,
+    this.isLoading = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    bool _outlineBtn = outlineBtn ?? false;
-    bool _isLoading = isLoading ?? false;
+    bool isOutlineBtn = outlineBtn ?? false;
+    bool isButtonLoading = isLoading ?? false;
 
     return GestureDetector(
-      onTap: onPressed,
+      onTap: isButtonLoading ? null : onPressed,
       child: Container(
-        height: 60.0,
+        height: 45.0,
         width: 100.0,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: _outlineBtn ? Colors.transparent : Colors.white,
+          color: isOutlineBtn ? Colors.transparent : Color(0xffD50000),
           border: Border.all(
-            color: Colors.white,
+            color: Color(0xffD50000),
             width: 2.0,
           ),
-          borderRadius: BorderRadius.circular(12.0),
+          borderRadius: BorderRadius.circular(8.0),
         ),
         margin: EdgeInsets.symmetric(
           horizontal: 24.0,
@@ -104,27 +114,30 @@ class CustomEditBtn extends StatelessWidget {
         child: Stack(
           children: [
             Visibility(
-              visible: _isLoading ? false : true,
+              visible: !isButtonLoading,
               child: Center(
                 child: Text(
-                  text ?? "Text",
+                  text,
                   style: TextStyle(
-                    fontSize: 16.0,
-                    color: _outlineBtn ? Colors.white : Colors.blue,
-                    fontWeight: FontWeight.w600,
+                    color: isOutlineBtn ? Color(0xffD50000) : Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14.0,
                   ),
                 ),
               ),
             ),
             Visibility(
-              visible: _isLoading,
+              visible: isButtonLoading,
               child: Center(
                 child: SizedBox(
-                    width: 30.0,
-                    height: 30.0,
-                    child: CircularProgressIndicator(
-                      backgroundColor: Colors.white,
-                    )),
+                  height: 20.0,
+                  width: 20.0,
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      isOutlineBtn ? Color(0xffD50000) : Colors.white,
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
