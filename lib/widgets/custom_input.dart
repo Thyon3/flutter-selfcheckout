@@ -1,59 +1,84 @@
 import 'package:flutter/material.dart';
 import 'package:selfcheckoutapp/constants.dart';
 
-//TEXT FIELD INPUT BOX
 class CustomInput extends StatelessWidget {
   final String hintText;
-  final Function(String) onChanged;
-  final Function(String) onSubmitted;
-  final FocusNode focusNode;
-  final TextInputAction textInputAction;
-  final bool isPasswordField;
-  final TextCapitalization textCapitalization;
+  final TextEditingController textEditingController;
   final TextInputType textInputType;
-  final dynamic controller;
+  final bool obscureText;
+  final VoidCallback? onSubmitted;
+  final VoidCallback? onChanged;
+  final FocusNode? focusNode;
+  final TextInputAction textInputAction;
+  final bool enableSuggestions;
+  final bool autocorrect;
+  final TextCapitalization textCapitalization;
 
-  const CustomInput(
-      {Key key,
-      this.hintText,
-      this.onChanged,
-      this.onSubmitted,
-      this.focusNode,
-      this.textInputAction,
-      this.isPasswordField,
-      this.controller,
-      this.textCapitalization,
-      this.textInputType})
-      : super(key: key);
+  CustomInput({
+    required this.hintText,
+    required this.textEditingController,
+    this.textInputType = TextInputType.text,
+    this.obscureText = false,
+    this.onSubmitted,
+    this.onChanged,
+    this.focusNode,
+    this.textInputAction = TextInputAction.done,
+    this.enableSuggestions = true,
+    this.autocorrect = true,
+    this.textCapitalization = TextCapitalization.sentences,
+  });
 
   @override
   Widget build(BuildContext context) {
-    bool _isPasswordField = isPasswordField ?? false;
-
     return Container(
-        margin: EdgeInsets.symmetric(
-          horizontal: 24.0,
-          vertical: 8.0,
+      margin: EdgeInsets.symmetric(
+        horizontal: 24.0,
+        vertical: 8.0,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: textEditingController,
+        keyboardType: textInputType,
+        obscureText: obscureText,
+        focusNode: focusNode,
+        textInputAction: textInputAction,
+        enableSuggestions: enableSuggestions,
+        autocorrect: autocorrect,
+        textCapitalization: textCapitalization,
+        onSubmitted: (value) {
+          if (onSubmitted != null) {
+            onSubmitted!();
+          }
+        },
+        onChanged: (value) {
+          if (onChanged != null) {
+            onChanged!();
+          }
+        },
+        decoration: InputDecoration(
+          hintText: hintText,
+          hintStyle: Constants.regularText.copyWith(
+            color: Colors.grey[600],
+          ),
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 20.0,
+            vertical: 16.0,
+          ),
         ),
-        decoration: BoxDecoration(
-          color: Color(0xfff2f2f2),
-          borderRadius: BorderRadius.circular(12.0),
-        ),
-        child: TextField(
-          controller: controller,
-          obscureText: _isPasswordField,
-          focusNode: focusNode,
-          onChanged: onChanged,
-          onSubmitted: onSubmitted,
-          textInputAction: textInputAction,
-          keyboardType: textInputType,
-          textCapitalization: textCapitalization,
-          decoration: InputDecoration(
-              border: InputBorder.none,
-              hintText: hintText ?? "Hint Text...",
-              contentPadding:
-                  EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0)),
-          style: Constants.regularDarkText,
-        ));
+        style: Constants.regularText,
+      ),
+    );
   }
 }
