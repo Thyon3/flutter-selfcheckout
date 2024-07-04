@@ -25,95 +25,102 @@ class BottomTabBtn extends StatelessWidget {
         decoration: BoxDecoration(
             border: Border(
                 top: BorderSide(
-                    color: _selected
-                        ? Theme.of(context).accentColor
-                        : Colors.transparent,
-                    width: 2.0))),
-        child: Icon(
-          iconData ?? Icons.home_rounded,
-          color: _selected ? Theme.of(context).accentColor : Colors.black,
-        ),
-      ),
-    );
-  }
-}
-
-//HOME NAVIGATION TABS
-class HomeNavigateTabs extends StatelessWidget {
   final String text;
-  final IconData iconData;
-  final Function onPressed;
+  final IconData icon;
+  final VoidCallback onPressed;
 
-  const HomeNavigateTabs({Key key, this.text, this.iconData, this.onPressed})
-      : super(key: key);
+  BottomTabBtn({
+    required this.text,
+    required this.icon,
+    required this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
-        child: Row(
-          children: [
-            Flexible(
-              fit: FlexFit.tight,
-              child: Container(
-                height: 60.0,
-                width: 60.0,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(10.0),
-                    bottomLeft: Radius.circular(10.0),
-                  ),
-                  color: Colors.white,
-                  // boxShadow: [
-                  //   BoxShadow(
-                  //     color: Colors.black.withOpacity(0.08),
-                  //     spreadRadius: 1.0,
-                  //     blurRadius: 30.0,
-                  //   ),
-                  // ],
-                ),
-                child: Icon(
-                  iconData ?? Icons.home_rounded,
-                  color: Theme.of(context).primaryColor,
-                ),
-              ),
-            ),
-            Flexible(
-              flex: 5,
-              child: Container(
-                padding: EdgeInsets.only(left: 30.0, right: 10.0),
-                child: Text(
-                  text ?? "Text",
-                  textAlign: TextAlign.left,
-                  style: Constants.regularHeading,
-                ),
-              ),
-            ),
-          ],
-        ),
-        //CONTAINER CONTINUED
-        height: 60.0,
-        width: double.maxFinite,
-        alignment: Alignment.center,
+        height: 50.0,
+        margin: EdgeInsets.all(8.0),
         decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.white,
-            width: 0.2,
+          color: Color(0xff1faa00),
+          borderRadius: BorderRadius.circular(25.0),
+        ),
+        child: Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                color: Colors.white,
+                size: 20.0,
+              ),
+              SizedBox(width: 8.0),
+              Text(
+                text,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14.0,
+                ),
+              ),
+            ],
           ),
-          borderRadius: BorderRadius.circular(10.0),
+        ),
+      ),
+    );
+  }
+}
+
+class HomeNavigateTabs extends StatelessWidget {
+  final String text;
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  HomeNavigateTabs({
+    required this.text,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        padding: EdgeInsets.all(20.0),
+        margin: EdgeInsets.all(10.0),
+        decoration: BoxDecoration(
           color: Colors.white,
+          borderRadius: BorderRadius.circular(15.0),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.09),
-              spreadRadius: 1.0,
-              blurRadius: 20.0,
+              color: Colors.black.withOpacity(0.1),
+              spreadRadius: 2,
+              blurRadius: 5,
+              offset: Offset(0, 3),
             ),
           ],
         ),
-        margin: EdgeInsets.symmetric(
-          vertical: 10.0,
-          horizontal: 20.0,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 50.0,
+              color: Color(0xff1faa00),
+            ),
+            SizedBox(height: 10.0),
+            Text(
+              text,
+              style: TextStyle(
+                fontSize: 16.0,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
@@ -121,9 +128,13 @@ class HomeNavigateTabs extends StatelessWidget {
 }
 
 class CartBottomTabBtn extends StatelessWidget {
-  final Function onPressed;
+  final String text;
+  final VoidCallback onPressed;
 
-  const CartBottomTabBtn({Key key, this.onPressed}) : super(key: key);
+  CartBottomTabBtn({
+    required this.text,
+    required this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -131,26 +142,19 @@ class CartBottomTabBtn extends StatelessWidget {
       onTap: onPressed,
       child: Container(
         height: 60.0,
-        width: 150.0,
-        alignment: Alignment.center,
+        margin: EdgeInsets.all(8.0),
         decoration: BoxDecoration(
-          color: Color(0xffD50000),
-          border: Border.all(
-            color: Color(0xffD50000),
-            width: 2.0,
-          ),
-          borderRadius: BorderRadius.circular(12.0),
+          color: Color(0xff1faa00),
+          borderRadius: BorderRadius.circular(30.0),
         ),
-        margin: EdgeInsets.symmetric(
-          horizontal: 24.0,
-          vertical: 30.0,
-        ),
-        child: Text(
-          "Proceed",
-          style: TextStyle(
-            fontSize: 16.0,
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
+        child: Center(
+          child: Text(
+            text,
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16.0,
+            ),
           ),
         ),
       ),
@@ -158,33 +162,50 @@ class CartBottomTabBtn extends StatelessWidget {
   }
 }
 
-Widget cartBottomTabTotal(double total) {
-  return Container(
-    margin: EdgeInsets.symmetric(
-      horizontal: 24.0,
-      vertical: 30.0,
-    ),
-    child: Column(
-      children: [
-        Text(
-          "Total",
-          style: TextStyle(
-            fontSize: 16.0,
-            color: Colors.black,
-            fontWeight: FontWeight.w300,
+class cartBottomTabTotal extends StatelessWidget {
+  final String totalAmount;
+
+  cartBottomTabTotal({
+    required this.totalAmount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(20.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 3,
+            offset: Offset(0, 2),
           ),
-          textAlign: TextAlign.center,
-        ),
-        Text(
-          "LKR ${total.toString()}0",
-          style: TextStyle(
-            fontSize: 16.0,
-            color: Colors.black,
-            fontWeight: FontWeight.w800,
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Total:',
+            style: TextStyle(
+              fontSize: 18.0,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
           ),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    ),
-  );
+          Text(
+            totalAmount,
+            style: TextStyle(
+              fontSize: 20.0,
+              fontWeight: FontWeight.bold,
+              color: Color(0xff1faa00),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
