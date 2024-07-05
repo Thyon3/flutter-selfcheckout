@@ -8,101 +8,104 @@ import 'package:selfcheckoutapp/screens/shopping_list.dart';
 import 'package:selfcheckoutapp/widgets/app_drawer.dart';
 import 'package:selfcheckoutapp/widgets/bottom_tabs.dart';
 
-class HomePage extends StatefulWidget {
-  @override
-  _HomePageState createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-
+class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async => false,
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          title: Text(
-            'Home',
-            style: Constants.boldHeadingAppBar,
-          ),
-          textTheme: GoogleFonts.poppinsTextTheme(),
-          toolbarHeight: 200.0,
-          flexibleSpace: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.only(bottomLeft: Radius.circular(20), bottomRight: Radius.circular(20)),
-                image: DecorationImage(
-                    image: AssetImage("assets/image2.png"),
-                    fit: BoxFit.cover
-                )
-            ),
+    return Scaffold(
+      backgroundColor: Color(0xfff5f5f5),
+      appBar: AppBar(
+        title: Text(
+          'ScanGo',
+          style: GoogleFonts.poppins(
+            fontSize: 24.0,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
         ),
-        drawer: AppDrawer(),
-
-        body: SafeArea(
-          child: Container(
-            width: double.infinity,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.only(
-                    top: 30.0,
-                    left: 30.0,
-                  ),
-                  margin: EdgeInsets.only(bottom: 20.0),
-                  child: Text(
-                    "What do you want to do?",
-                    textAlign: TextAlign.left,
-                    style: Constants.boldHeading,
-                  ),
+        backgroundColor: Color(0xff1faa00),
+        elevation: 0,
+        centerTitle: true,
+      ),
+      drawer: AppDrawer(),
+      body: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Welcome to ScanGo!',
+                style: GoogleFonts.poppins(
+                  fontSize: 28.0,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xff1faa00),
                 ),
-                Expanded(
-                  child: Column(
-                    children: [
-                      HomeNavigateTabs(
-                        text: "Create a Shopping List",
-                        iconData: Icons.assignment_turned_in_rounded,
-                        onPressed: () {
-                          setState(() {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => ShoppingListPage()));
-                          });
-                        },
-                      ),
-                      HomeNavigateTabs(
-                        text: "Check Cart History",
-                        iconData: Icons.history,
-                        onPressed: () {
-                          setState(() {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => BillHistoryPage()));
-                          });
-                        },
-                      ),
-                      HomeNavigateTabs(
-                        text: "Let's Start Shopping!",
-                        iconData: Icons.shopping_cart_rounded,
-                        onPressed: () {
-                          setState(() {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => ShoppingCartPage()));
-                          });
-                        },
-                      ),
-                    ],
-                  ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 20.0),
+              Text(
+                'Choose an option below to get started:',
+                style: GoogleFonts.poppins(
+                  fontSize: 16.0,
+                  color: Colors.grey[600],
                 ),
-              ],
-            ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 40.0),
+              Expanded(
+                child: GridView.count(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16.0,
+                  mainAxisSpacing: 16.0,
+                  children: [
+                    HomeNavigateTabs(
+                      text: 'Create Shopping List',
+                      icon: Icons.list_alt,
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ShoppingListPage(),
+                          ),
+                        );
+                      },
+                    ),
+                    HomeNavigateTabs(
+                      text: 'View Cart History',
+                      icon: Icons.history,
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => BillHistoryPage(),
+                          ),
+                        );
+                      },
+                    ),
+                    HomeNavigateTabs(
+                      text: 'Start Shopping',
+                      icon: Icons.shopping_cart,
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ShoppingCartPage(),
+                          ),
+                        );
+                      },
+                    ),
+                    HomeNavigateTabs(
+                      text: 'Profile Settings',
+                      icon: Icons.person,
+                      onPressed: () {
+                        // Navigate to profile
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
