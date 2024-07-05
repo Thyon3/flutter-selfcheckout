@@ -1,33 +1,28 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:selfcheckoutapp/screens/loading.dart';
 import 'package:selfcheckoutapp/screens/home.dart';
 import 'package:selfcheckoutapp/screens/login.dart';
+import 'package:selfcheckoutapp/screens/loading.dart';
+import 'package:selfcheckoutapp/services/firebase_services.dart';
 
 class LandingPage extends StatelessWidget {
-  final Future<FirebaseApp> _initialization = Firebase.initializeApp();
+  final FirebaseServices _firebaseServices = FirebaseServices();
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: _initialization,
+    return StreamBuilder<User?>(
+      stream: _firebaseServices._auth.authStateChanges(),
       builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Scaffold(
-            body: Center(
-              child: Text("Error: ${snapshot.error}"),
-            ),
-          );
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Loading(message: 'Initializing app...');
         }
-
-        //CONNECTION INITIALIZED - FIREBASE APP IS RUNNING
-        if (snapshot.connectionState == ConnectionState.done) {
-          return StreamBuilder(
-            stream: FirebaseAuth.instance.authStateChanges(),
-            builder: (context, streamSnapshot) {
-            if (streamSnapshot.hasError) {
-              return Scaffold(
+        
+        if (snapshot.hasData) {
+          // User is logged in
+          return HomePage();
+        } else {
+          // User is not logged in
+          return LoginPage();
                 body: Center(
                   child: Text("Error: ${streamSnapshot.error}"),
                 ),
