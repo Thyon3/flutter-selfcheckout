@@ -1,8 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:selfcheckoutapp/constants.dart';
 import 'package:selfcheckoutapp/screens/register.dart';
+import 'package:selfcheckoutapp/services/firebase_services.dart';
 import 'package:selfcheckoutapp/widgets/custom_button.dart';
 import 'package:selfcheckoutapp/widgets/custom_input.dart';
 
@@ -12,155 +12,80 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final FirebaseServices _firebaseServices = FirebaseServices();
+  bool _isLoading = false;
 
-  //ALERT DIALOG TO DISPLAY ERRORS
-  Future<void> _alertDialogBuilder(String error) async {
-    return showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) {
-          return AlertDialog(
-            title: Text("Error"),
-            content: Container(
-              child: Text(error),
-            ),
-            actions: [
-              TextButton(
-                child: Text("Close"),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-              )
-            ],
-          );
-        }
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('OK'),
+          ),
+        ],
+      ),
     );
   }
 
-  //FORM INPUT VALUES
-  String _loginEmail = "";
-  String _loginPassword = "";
+  Future<void> _login() async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      _showErrorDialog('Please fill in all fields');
+      return;
+    }
 
-  //CREATE A NEW ACCOUNT
-  Future<String> _loginAccount() async {
+    setState(() => _isLoading = true);
+
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: _loginEmail, password: _loginPassword);
-      return null;
-    } on FirebaseAuthException catch(e){
-      if (e.code == 'user-not-found') {
-        return ('No user found for that email.');
-      } else if (e.code == 'wrong-password') {
-        return ('Wrong password provided for that user.');
+      final user = await _firebaseServices.signInWithEmailAndPassword(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
+
+      if (user == null) {
+        _showErrorDialog('Invalid email or password');
       }
-      return e.message;
+    } catch (e) {
+      _showErrorDialog('Login failed: ${e.toString()}');
+    } finally {
+      setState(() => _isLoading = false);
     }
-    catch (e){
-      return (e);
-    }
-  }
-
-  //DEFAULT LOADING STATE
-  bool _loginFromLoading = false;
-
-  void _submitForm() async {
-    //SET THE FORM TO LOADING STATE
-    setState(() {
-      _loginFromLoading = true;
-    });
-
-    //RUN THE CREATE ACCOUNT METHOD
-    String _loginAccountFeedback = await _loginAccount();
-    if(_loginAccountFeedback != null){
-      _alertDialogBuilder(_loginAccountFeedback);
-
-      //SET THE FORM TO REGULAR STATE
-      setState(() {
-        _loginFromLoading = false;
-      });
-    }
-  }
-
-  //FOCUS NODE FOR INPUT FIELDS
-  FocusNode _inputFocusNodePassword;
-
-  //FOCUS ON
-  @override
-  void initState() {
-    _inputFocusNodePassword = FocusNode();
-    super.initState();
-  }
-
-  //FOCUS OFF
-  @override
-  void dispose() {
-    _inputFocusNodePassword.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
-        child: Container(
-          width: double.infinity,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: EdgeInsets.only(
-                  top: 24.0,
-                ),
-                child: Text(
-                  "Welcome Shopper!\nLogin to your account",
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(height: 60.0),
+                Text(
+                  'Welcome Back!',
+                  style: TextStyle(
+                    fontSize: 32.0,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xff1faa00),
+                  ),
                   textAlign: TextAlign.center,
-                  style: Constants.boldHeading,
                 ),
-              ),
-              Column(
-                children: [
-                  CustomInput(
-                    hintText: "Email...",
-                    textCapitalization: TextCapitalization.none,
-                    textInputType: TextInputType.emailAddress,
-                    onChanged: (value){
-                      _loginEmail = value;
-                    },
-                    onSubmitted: (value){
-                      _inputFocusNodePassword.requestFocus();
-                    },
-                    textInputAction: TextInputAction.next,
+                SizedBox(height: 10.0),
+                Text(
+                  'Sign in to continue shopping',
+                  style: TextStyle(
+                    fontSize: 16.0,
+                    color: Colors.grey[600],
                   ),
-                  CustomInput(
-                    hintText: "Password...",
-                    textCapitalization: TextCapitalization.none,
-                    onChanged: (value){
-                      _loginPassword = value;
-                    },
-                    onSubmitted: (value){
-                      _submitForm();
-                    },
-                    focusNode: _inputFocusNodePassword,
-                    isPasswordField: true,
-                  ),
-                  CustomBtn(
-                    text: "Login",
-                    onPressed: () {
-                      _submitForm();
-                    },
-                    isLoading: _loginFromLoading,
-                  ),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.only(
-                  bottom: 24.0,
-                ),
-                child: CustomBtn(
-                  text: "Create New Account",
-                  onPressed: () {
-                    Navigator.push(
-                        context,
+                  textAlign: TextAlign.center,
                         MaterialPageRoute(
                             builder: (context) => RegisterPage()
                         )
