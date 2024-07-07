@@ -1,9 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:selfcheckoutapp/screens/login.dart';
+import 'package:selfcheckoutapp/services/firebase_services.dart';
 import 'package:selfcheckoutapp/widgets/custom_button.dart';
 import 'package:selfcheckoutapp/widgets/custom_input.dart';
-import 'package:selfcheckoutapp/constants.dart';
 
 class RegisterPage extends StatefulWidget {
   @override
@@ -11,163 +10,188 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  //ALERT DIALOG TO DISPLAY ERRORS
-  Future<void> _alertDialogBuilder(String error) async {
-    return showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) {
-          return AlertDialog(
-            title: Text("Error"),
-            content: Container(
-              child: Text(error),
-            ),
-            actions: [
-              TextButton(
-                child: Text("Close"),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-              )
-            ],
-          );
-        });
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  final FirebaseServices _firebaseServices = FirebaseServices();
+  bool _isLoading = false;
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
-  //FORM INPUT VALUES
-  String _registerEmail = "";
-  String _registerPassword = "";
+  void _showSuccessDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Success'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context);
+            },
+            child: Text('Login'),
+          ),
+        ],
+      ),
+    );
+  }
 
-  //CREATE A NEW ACCOUNT
-  Future<String> _createAccount() async {
+  Future<void> _register() async {
+    if (_emailController.text.isEmpty || 
+        _passwordController.text.isEmpty || 
+        _confirmPasswordController.text.isEmpty) {
+      _showErrorDialog('Please fill in all fields');
+      return;
+    }
+
+    if (_passwordController.text != _confirmPasswordController.text) {
+      _showErrorDialog('Passwords do not match');
+      return;
+    }
+
+    if (_passwordController.text.length < 6) {
+      _showErrorDialog('Password must be at least 6 characters');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
     try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-          email: _registerEmail, password: _registerPassword);
-      return null;
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'weak-password') {
-        return ('The password provided is too weak.');
-      } else if (e.code == 'email-already-in-use') {
-        return ('The account already exists for that email.');
+      final user = await _firebaseServices.createUserWithEmailAndPassword(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
+
+      if (user != null) {
+        await _firebaseServices.saveUserData(
+          user.uid,
+          {
+            'email': user.email,
+            'name': user.email?.split('@')[0] ?? 'User',
+            'createdAt': DateTime.now().toIso8601String(),
+          },
+        );
+        
+        _showSuccessDialog('Account created successfully!');
       }
-      return e.message;
     } catch (e) {
-      return (e);
+      String errorMessage = 'Registration failed';
+      if (e.toString().contains('email-already-in-use')) {
+        errorMessage = 'An account with this email already exists';
+      } else if (e.toString().contains('weak-password')) {
+        errorMessage = 'Password is too weak';
+      } else if (e.toString().contains('invalid-email')) {
+        errorMessage = 'Invalid email address';
+      }
+      
+      _showErrorDialog(errorMessage);
+    } finally {
+      setState(() => _isLoading = false);
     }
-  }
-
-  //DEFAULT LOADING STATE
-  bool _registerFromLoading = false;
-
-  void _submitForm() async {
-    //SET THE FORM TO LOADING STATE
-    setState(() {
-      _registerFromLoading = true;
-    });
-
-    //RUN THE CREATE ACCOUNT METHOD
-    String _createAccountFeedback = await _createAccount();
-    if (_createAccountFeedback != null) {
-      _alertDialogBuilder(_createAccountFeedback);
-
-      //SET THE FORM TO REGULAR STATE
-      setState(() {
-        _registerFromLoading = false;
-      });
-    } else {
-      //STRING WAS NULL -> HOME PAGE
-      Navigator.pop(context);
-    }
-  }
-
-  //FOCUS NODE FOR INPUT FIELDS
-  FocusNode _inputFocusNodePassword;
-
-  //FOCUS ON TO THE TEXT FIELD
-  @override
-  void initState() {
-    _inputFocusNodePassword = FocusNode();
-    super.initState();
-  }
-
-  //FOCUS OFF FROM THE TEXT FIELD
-  @override
-  void dispose() {
-    _inputFocusNodePassword.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
-        child: Container(
-          width: double.infinity,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: EdgeInsets.only(
-                  top: 24.0,
-                ),
-                child: Text(
-                  "Create A New Account",
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(height: 60.0),
+                Text(
+                  'Create Account',
+                  style: TextStyle(
+                    fontSize: 32.0,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xff1faa00),
+                  ),
                   textAlign: TextAlign.center,
-                  style: Constants.boldHeading,
                 ),
-              ),
-              Column(
-                children: [
-                  CustomInput(
-                    hintText: "Email...",
-                    textCapitalization: TextCapitalization.none,
-                    textInputType: TextInputType.emailAddress,
-                    onChanged: (value) {
-                      _registerEmail = value;
-                    },
-                    onSubmitted: (value) {
-                      _inputFocusNodePassword.requestFocus();
-                    },
-                    textInputAction: TextInputAction.next,
+                SizedBox(height: 10.0),
+                Text(
+                  'Sign up to start shopping',
+                  style: TextStyle(
+                    fontSize: 16.0,
+                    color: Colors.grey[600],
                   ),
-                  CustomInput(
-                    hintText: "Password...",
-                    textCapitalization: TextCapitalization.none,
-                    isPasswordField: true,
-                    onChanged: (value) {
-                      _registerPassword = value;
-                    },
-                    onSubmitted: (value) {
-                      _submitForm();
-                    },
-                    focusNode: _inputFocusNodePassword,
-                  ),
-                  CustomBtn(
-                    text: "Create New Account",
-                    onPressed: () {
-                      _submitForm();
-                    },
-                    isLoading: _registerFromLoading,
-                  ),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.only(
-                  bottom: 24.0,
+                  textAlign: TextAlign.center,
                 ),
-                child: CustomBtn(
-                  text: "Back to Login",
-                  onPressed: () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => LoginPage()));
-                  },
-                  outlineBtn: true,
+                SizedBox(height: 40.0),
+                CustomInput(
+                  hintText: 'Email Address',
+                  textEditingController: _emailController,
+                  textInputType: TextInputType.emailAddress,
+                  enableSuggestions: false,
+                  autocorrect: false,
                 ),
-              ),
-            ],
+                SizedBox(height: 16.0),
+                CustomInput(
+                  hintText: 'Password',
+                  textEditingController: _passwordController,
+                  obscureText: true,
+                  enableSuggestions: false,
+                  autocorrect: false,
+                ),
+                SizedBox(height: 16.0),
+                CustomInput(
+                  hintText: 'Confirm Password',
+                  textEditingController: _confirmPasswordController,
+                  obscureText: true,
+                  enableSuggestions: false,
+                  autocorrect: false,
+                ),
+                SizedBox(height: 40.0),
+                CustomBtn(
+                  text: 'Sign Up',
+                  onPressed: _register,
+                  isLoading: _isLoading,
+                ),
+                SizedBox(height: 20.0),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Text(
+                    'Already have an account? Login',
+                    style: TextStyle(
+                      fontSize: 16.0,
+                      color: Color(0xff1faa00),
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                SizedBox(height: 20.0),
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
   }
 }
