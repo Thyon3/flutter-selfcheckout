@@ -15,6 +15,7 @@ class ShoppingListPage extends StatefulWidget {
 class _ShoppingListPageState extends State<ShoppingListPage> {
   List<ToDo> list = <ToDo>[];
   SharedPreferences sharedPreferences;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -25,6 +26,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
   initSharedPreferences() async {
     sharedPreferences = await SharedPreferences.getInstance();
     loadData();
+    setState(() => _isLoading = false);
   }
 
   @override
