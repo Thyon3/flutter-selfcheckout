@@ -1,13 +1,13 @@
-import 'package:flutter/cupertino.dart';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:selfcheckoutapp/constants.dart';
 import 'package:selfcheckoutapp/models/item.dart';
-import 'package:selfcheckoutapp/screens/checking_page.dart';
+import 'package:selfcheckoutapp/screens/checking.dart';
 import 'package:selfcheckoutapp/services/firebase_services.dart';
 import 'package:selfcheckoutapp/widgets/bottom_tabs.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ShoppingCartPage extends StatefulWidget {
   @override
@@ -15,114 +15,170 @@ class ShoppingCartPage extends StatefulWidget {
 }
 
 class _ShoppingCartPageState extends State<ShoppingCartPage> {
-  FirebaseServices _firebaseServices = FirebaseServices();
+  final FirebaseServices _firebaseServices = FirebaseServices();
+  List<Item> cartItems = [];
+  bool _isLoading = false;
+  double _totalPrice = 0.0;
+  double _totalWeight = 0.0;
 
-  List<Item> itemsList = [];
+  @override
+  void initState() {
+    super.initState();
+    _loadCartItems();
+  }
 
-  double total = 0;
-  double totalWeight = 0;
-
-  static final DateTime now = DateTime.now();
-  static final DateFormat formatter = DateFormat('dd-MM-yyyy HH:mm:ss');
-  final String formatted = formatter.format(now);
-
-  void scanQRCode() async {
-    await FlutterBarcodeScanner.scanBarcode(
-            '#1faa00', "Cancel", true, ScanMode.BARCODE)
-        .then((value) {
-      print(value);
-      _firebaseServices.productsRef
-          .where('barcode', isEqualTo: value)
-          .get()
-          .then((val) {
-        itemsList.add(new Item(
-          barcode: val.docs.first['barcode'],
-          name: val.docs.first['name'],
-          price: double.parse(val.docs.first['price'].toString()),
-          weight: double.parse(val.docs.first['weight'].toString()),
-          quantity: 1,
-          photo: val.docs.first['image'],
-        ));
-        ScaffoldMessenger.of(context).showSnackBar(_snackBarItemAdded);
-        getTotals();
-      });
+  Future<void> _loadCartItems() async {
+    final prefs = await SharedPreferences.getInstance();
+    final cartData = prefs.getStringList('cart_items') ?? [];
+    
+    setState(() {
+      cartItems = cartData.map((item) {
+        final parts = item.split('|');
+        return Item(
+          name: parts[0],
+          barcode: parts[1],
+          price: double.tryParse(parts[2]) ?? 0.0,
+          weight: double.tryParse(parts[3]) ?? 0.0,
+          quantity: int.tryParse(parts[4]) ?? 1,
+          photo: parts.length > 5 ? parts[5] : null,
+        );
+      }).toList();
+      _calculateTotals();
     });
   }
 
-  getTotals() {
-    total = 0;
-    totalWeight = 0;
-    for (var item in itemsList) {
-      total += item.price * item.quantity;
-      totalWeight += item.weight * item.quantity;
-    }
-    setState(() {});
+  Future<void> _saveCartItems() async {
+    final prefs = await SharedPreferences.getInstance();
+    final cartData = cartItems.map((item) => 
+      '${item.name}|${item.barcode}|${item.price}|${item.weight}|${item.quantity}|${item.photo ?? ""}'
+    ).toList();
+    await prefs.setStringList('cart_items', cartData);
   }
 
-  final SnackBar _snackBarItemAdded = SnackBar(
-    content: Text(
-      "Item added to cart!",
-      style: TextStyle(color: Colors.white),
-    ),
-    backgroundColor: Color(0xff1faa00),
-    duration: Duration(seconds: 2),
-  );
+  void _calculateTotals() {
+    _totalPrice = cartItems.fold(0.0, (sum, item) => sum + (item.price * item.quantity));
+    _totalWeight = cartItems.fold(0.0, (sum, item) => sum + (item.weight * item.quantity));
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async => false,
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          title: Text(
-            'Shopping Cart',
-            style: Constants.boldHeadingAppBar,
+  Future<void> _scanBarcode() async {
+    try {
+      final barcode = await FlutterBarcodeScanner.scanBarcode(
+        '#FF6666',
+        'Cancel',
+        true,
+        ScanMode.BARCODE,
+      );
+
+      if (barcode != '-1') {
+        await _fetchProductByBarcode(barcode);
+      }
+    } catch (e) {
+      _showErrorDialog('Failed to scan barcode: $e');
+    }
+  }
+
+  Future<void> _fetchProductByBarcode(String barcode) async {
+    setState(() => _isLoading = true);
+
+    try {
+      final querySnapshot = await _firebaseServices.productsRef
+          .where('barcode', isEqualTo: barcode)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        final productData = querySnapshot.docs.first.data() as Map<String, dynamic>;
+        final existingItemIndex = cartItems.indexWhere(
+          (item) => item.barcode == barcode,
+        );
+
+        if (existingItemIndex != -1) {
+          setState(() {
+            cartItems[existingItemIndex].quantity++;
+          });
+        } else {
+          final newItem = Item(
+            name: productData['name'] ?? 'Unknown Product',
+            barcode: productData['barcode'] ?? barcode,
+            price: (productData['price'] ?? 0.0).toDouble(),
+            weight: (productData['weight'] ?? 0.0).toDouble(),
+            quantity: 1,
+            photo: productData['photo'],
+          );
+          setState(() {
+            cartItems.add(newItem);
+          });
+        }
+        
+        _calculateTotals();
+        await _saveCartItems();
+        _showSuccessDialog('Product added to cart!');
+      } else {
+        _showErrorDialog('Product not found for barcode: $barcode');
+      }
+    } catch (e) {
+      _showErrorDialog('Failed to fetch product: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _removeItem(int index) {
+    setState(() {
+      cartItems.removeAt(index);
+      _calculateTotals();
+    });
+    _saveCartItems();
+  }
+
+  void _updateQuantity(int index, int newQuantity) {
+    if (newQuantity <= 0) {
+      _removeItem(index);
+      return;
+    }
+
+    setState(() {
+      cartItems[index].quantity = newQuantity;
+      _calculateTotals();
+    });
+    _saveCartItems();
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('OK'),
           ),
-          textTheme: GoogleFonts.poppinsTextTheme(),
-          toolbarHeight: 200.0,
-          flexibleSpace: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.only(bottomLeft: Radius.circular(20), bottomRight: Radius.circular(20)),
-                image: DecorationImage(
-                    image: AssetImage("assets/image2.png"),
-                    fit: BoxFit.cover
-                )
-            ),
+        ],
+      ),
+    );
+  }
+
+  void _showSuccessDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Success'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('OK'),
           ),
-        ),
-        body: SafeArea(
-          child: itemsList.isNotEmpty ? buildBody() : emptyBodyBuild(),
-        ),
-        bottomNavigationBar: itemsList.isNotEmpty
-            ? Container(
-                height: 180.0,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    cartBottomTabTotal(total),
-                    CartBottomTabBtn(
-                      onPressed: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => CheckingPage(
-                                  itemsList: itemsList,
-                                  total: total,
-                                  totalWeight: totalWeight,
-                                )));
-                      },
-                    ),
-                  ],
-                ),
-              )
-            : null,
+        ],
       ),
     );
   }
 
   Widget buildBody() {
     return ListView.builder(
+      itemCount: cartItems.length,
       itemCount: itemsList.length,
       itemBuilder: (context, index) {
         return buildItem(itemsList[index], index);
