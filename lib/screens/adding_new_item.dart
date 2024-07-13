@@ -1,96 +1,134 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:selfcheckoutapp/widgets/custom_button.dart';
+import 'package:selfcheckoutapp/widgets/custom_input.dart';
 
 class NewItemView extends StatefulWidget {
-  final String title;
+  final Function(String) onItemAdded;
+  final String? initialText;
 
-  const NewItemView({Key key, this.title}) : super(key: key);
+  NewItemView({
+    required this.onItemAdded,
+    this.initialText,
+  });
 
   @override
   _NewItemViewState createState() => _NewItemViewState();
 }
 
 class _NewItemViewState extends State<NewItemView> {
-  TextEditingController textFieldController;
+  final TextEditingController _textController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void initState() {
-    textFieldController = TextEditingController(text: widget.title);
     super.initState();
+    if (widget.initialText != null) {
+      _textController.text = widget.initialText!;
+    }
+  }
+
+  Future<void> _addItem() async {
+    final text = _textController.text.trim();
+    
+    if (text.isEmpty) {
+      _showErrorDialog('Please enter an item');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      // Simulate API call delay
+      await Future.delayed(Duration(milliseconds: 500));
+      
+      widget.onItemAdded(text);
+      Navigator.pop(context);
+    } catch (e) {
+      _showErrorDialog('Failed to add item: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        height: double.infinity,
-        color: Colors.blue,
-        child: Stack(
+      backgroundColor: Color(0xfff5f5f5),
+      appBar: AppBar(
+        title: Text(
+          widget.initialText != null ? 'Edit Item' : 'Add New Item',
+          style: TextStyle(
+            fontSize: 18.0,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: Color(0xff1faa00),
+        leading: IconButton(
+          icon: Icon(Icons.close),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 50.0, left: 15.0),
-              child: IconButton(
-                icon: Icon(Icons.close_rounded, color: Colors.white),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
+            SizedBox(height: 40.0),
+            Text(
+              widget.initialText != null 
+                  ? 'Edit your shopping item'
+                  : 'Add a new item to your shopping list',
+              style: TextStyle(
+                fontSize: 16.0,
+                color: Colors.grey[600],
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 30.0),
+            CustomInput(
+              hintText: 'Enter item name',
+              textEditingController: _textController,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _addItem(),
+            ),
+            SizedBox(height: 20.0),
+            Text(
+              'Tips:',
+              style: TextStyle(
+                fontSize: 14.0,
+                fontWeight: FontWeight.bold,
+                color: Color(0xff1faa00),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.only(
-                top: 130.0,
-                bottom: 150.0,
-              ),
-              child: Container(
-                margin: EdgeInsets.symmetric(horizontal: 25.0),
-                height: 150.0,
-                alignment: Alignment.center,
-                color: Colors.white,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        top: 20.0,
-                        left: 10.0,
-                        right: 10.0,
-                      ),
-                      child: TextField(
-                        style: TextStyle(
-                          fontSize: 18.0,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: "New Item",
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide:
-                                BorderSide(color: Colors.blue, width: 2.0),
-                          ),
-                          contentPadding: EdgeInsets.only(top: 18.0),
-                        ),
-                        controller: textFieldController,
-                        onEditingComplete: () => saveData(),
-                        autofocus: true,
-                        textCapitalization: TextCapitalization.sentences,
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          saveData();
-                        });
-                      },
-                      child: Text(
-                        "ADD",
-                        style: TextStyle(
-                            color: Theme.of(context).accentColor,
-                            fontSize: 16.0),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            SizedBox(height: 8.0),
+            ...[
+              _buildTip('• Be specific (e.g., "2% milk" instead of "milk")'),
+              _buildTip('• Add quantities (e.g., "3 cans tomatoes")'),
+              _buildTip('• Include brand preferences if important'),
+            ],
+            Spacer(),
+            CustomBtn(
+              text: widget.initialText != null ? 'Update Item' : 'Add Item',
+              onPressed: _addItem,
+              isLoading: _isLoading,
             ),
+            SizedBox(height: 20.0),
           ],
         ),
       ),
