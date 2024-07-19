@@ -1,126 +1,126 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:firebase_analytics/observer.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 class AnalyticsService {
-  static final AnalyticsService _instance = AnalyticsService._internal();
-  factory AnalyticsService() => _instance;
-  AnalyticsService._internal();
+  static FirebaseAnalytics? _analytics;
+  static bool _isInitialized = false;
 
-  FirebaseAnalytics? _analytics;
-  static FirebaseAnalyticsObserver? _observer;
-
-  Future<void> initialize() async {
-    _analytics = FirebaseAnalytics.instance;
-    _observer = FirebaseAnalyticsObserver(analytics: _analytics!);
+  static Future<void> initialize() async {
+    if (_isInitialized) return;
     
-    // Enable analytics collection
-    await _analytics!.setAnalyticsCollectionEnabled(true);
+    try {
+      _analytics = FirebaseAnalytics.instance;
+      await _analytics.setAnalyticsCollectionEnabled(true);
+      _isInitialized = true;
+      
+      // Set default user properties
+      await _analytics.setUserProperty('app_version', '1.0.0');
+      await _analytics.setUserProperty('platform', kIsWeb ? 'web' : 'mobile');
+    } catch (e) {
+      debugPrint('Analytics initialization failed: $e');
+    }
   }
 
-  FirebaseAnalyticsObserver? get observer => _observer;
-
-  // Screen tracking
-  Future<void> trackScreen(String screenName, {String? screenClassOverride}) async {
-    await _analytics?.setCurrentScreen(
+  static Future<void> logScreenView({
+    required String screenName,
+    String? screenClass,
+  }) async {
+    if (!_isInitialized || _analytics == null) return;
+    
+    await _analytics.logScreenView(
       screenName: screenName,
-      screenClassOverride: screenClassOverride,
+      screenClassOverride: screenClass,
     );
   }
 
-  // Event tracking
-  Future<void> trackEvent(String name, {Map<String, Object>? parameters}) async {
-    await _analytics?.logEvent(
+  static Future<void> logEvent({
+    required String name,
+    Map<String, dynamic>? parameters,
+  }) async {
+    if (!_isInitialized || _analytics == null) return;
+    
+    await _analytics.logEvent(
       name: name,
       parameters: parameters,
     );
   }
 
-  // User properties
-  Future<void> setUserProperty(String name, {String? value}) async {
-    await _analytics?.setUserProperty(name: name, value: value);
-  }
-
-  // User ID tracking
-  Future<void> setUserId(String userId) async {
-    await _analytics?.setUserId(userId);
-  }
-
-  // E-commerce events
-  Future<void> trackAddToCart({
-    required String itemId,
-    required String itemName,
-    required double price,
-    required String category,
-  }) async {
-    await trackEvent('add_to_cart', parameters: {
-      'item_id': itemId,
-      'item_name': itemName,
-      'price': price,
-      'category': category,
-    });
-  }
-
-  Future<void> trackRemoveFromCart({
-    required String itemId,
-    required String itemName,
-    required double price,
-  }) async {
-    await trackEvent('remove_from_cart', parameters: {
-      'item_id': itemId,
-      'item_name': itemName,
-      'price': price,
-    });
-  }
-
-  Future<void> trackBeginCheckout({
-    required double totalAmount,
-    required int itemCount,
-  }) async {
-    await trackEvent('begin_checkout', parameters: {
-      'value': totalAmount,
-      'currency': 'LKR',
-      'item_count': itemCount,
-    });
-  }
-
-  Future<void> trackPurchaseComplete({
-    required String transactionId,
-    required double totalAmount,
-    required int itemCount,
-  }) async {
-    await trackEvent('purchase', parameters: {
-      'transaction_id': transactionId,
-      'value': totalAmount,
-      'currency': 'LKR',
-      'item_count': itemCount,
-    });
-  }
-
-  // User engagement events
-  Future<void> trackLogin({String? method}) async {
-    await _analytics?.logLogin(loginMethod: method ?? 'email');
-  }
-
-  Future<void> trackSignUp({String? method}) async {
-    await _analytics?.logSignUp(signUpMethod: method ?? 'email');
-  }
-
-  Future<void> trackSearch(String searchTerm) async {
-    await _analytics?.logSearch(searchTerm: searchTerm);
-  }
-
-  // Barcode scanning events
-  Future<void> trackBarcodeScan({
-    required String barcode,
+  static Future<void> logLogin({
+    required String method,
     bool success = true,
-    String? error,
+    String? errorMessage,
   }) async {
-    await trackEvent('barcode_scan', parameters: {
-      'barcode': barcode,
+    if (!_isInitialized || _analytics == null) return;
+    
+    final params = <String, dynamic>{
+      'method': method,
       'success': success,
-      'error': error,
-    });
+      if (errorMessage != null) 'error_message': errorMessage,
+    };
+    
+    await logEvent(
+      name: 'login',
+      parameters: params,
+    );
+  }
+
+  static Future<void> logSignUp({
+    required String method,
+    bool success = true,
+    String? errorMessage,
+  }) async {
+    if (!_isInitialized || _analytics == null) return;
+    
+    final params = <String, dynamic>{
+      'method': method,
+      'success': success,
+      if (errorMessage != null) 'error_message': errorMessage,
+    };
+    
+    await logEvent(
+      name: 'sign_up',
+      parameters: params,
+    );
+  }
+
+  static Future<void> logPurchase({
+    required double amount,
+    required String currency,
+    required int itemCount,
+    String? paymentMethod,
+  }) async {
+    if (!_isInitialized || _analytics == null) return;
+    
+    final params = <String, dynamic>{
+      'amount': amount,
+      'currency': currency,
+      'item_count': itemCount,
+      'payment_method': paymentMethod ?? 'unknown',
+    };
+    
+    await logEvent(
+      name: 'purchase_completed',
+      parameters: params,
+    );
+  }
+
+  static Future<void> logBarcodeScan({
+    required String barcode,
+    bool productFound = true,
+    String? productName,
+  }) async {
+    if (!_isInitialized || _analytics == null) return;
+    
+    final params = <String, dynamic>{
+      'barcode': barcode,
+      'product_found': productFound,
+      'product_name': productName,
+    };
+    
+    await logEvent(
+      name: 'barcode_scan',
+      parameters: params,
+    );
   }
 
   // Shopping list events
