@@ -1,65 +1,75 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:selfcheckoutapp/services/theme_service.dart';
+import 'package:selfcheckoutapp/services/localization_service.dart';
 
 class PreferencesService {
-  static final PreferencesService _instance = PreferencesService._internal();
-  factory PreferencesService() => _instance;
-  PreferencesService._internal();
+  static SharedPreferences? _prefs;
+  static const String _firstLaunchKey = 'first_launch';
+  static const String _autoBackupKey = 'auto_backup';
+  static const String _notificationsEnabledKey = 'notifications_enabled';
+  static const String _biometricEnabledKey = 'biometric_enabled';
+  static const String _lastSyncTimeKey = 'last_sync_time';
+  static const String _cartReminderTimeKey = 'cart_reminder_time';
+  static const String _defaultLanguageKey = 'default_language';
+  static const String _searchHistoryKey = 'search_history';
+  static const String _favoriteProductsKey = 'favorite_products';
+  static const String _recentlyViewedKey = 'recently_viewed';
 
-  static const String _themeKey = 'theme_mode';
-  static const String _languageKey = 'language';
-  static const String _biometricKey = 'biometric_enabled';
-  static const String _notificationsKey = 'notifications_enabled';
-  static const String _autoLoginKey = 'auto_login';
-  static const String _cartAutoSaveKey = 'cart_auto_save';
-
-  Future<void> setThemeMode(String themeMode) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_themeKey, themeMode);
+  static Future<void> initialize() async {
+    _prefs ??= await SharedPreferences.getInstance();
   }
 
-  Future<String> getThemeMode() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_themeKey) ?? 'light';
+  static Future<bool> isFirstLaunch() async {
+    await initialize();
+    final isFirst = _prefs!.getBool(_firstLaunchKey) ?? true;
+    if (isFirst) {
+      await _prefs!.setBool(_firstLaunchKey, false);
+    }
+    return isFirst;
   }
 
-  Future<void> setLanguage(String language) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_languageKey, language);
+  static Future<void> setAutoBackup(bool enabled) async {
+    await initialize();
+    await _prefs!.setBool(_autoBackupKey, enabled);
   }
 
-  Future<String> getLanguage() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_languageKey) ?? 'en';
+  static Future<bool> isAutoBackupEnabled() async {
+    await initialize();
+    return _prefs!.getBool(_autoBackupKey) ?? true;
   }
 
-  Future<void> setBiometricEnabled(bool enabled) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_biometricKey, enabled);
+  static Future<void> setNotificationsEnabled(bool enabled) async {
+    await initialize();
+    await _prefs!.setBool(_notificationsEnabledKey, enabled);
   }
 
-  Future<bool> isBiometricEnabled() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_biometricKey) ?? false;
+  static Future<bool> areNotificationsEnabled() async {
+    await initialize();
+    return _prefs!.getBool(_notificationsEnabledKey) ?? true;
   }
 
-  Future<void> setNotificationsEnabled(bool enabled) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_notificationsKey, enabled);
+  static Future<void> setBiometricEnabled(bool enabled) async {
+    await initialize();
+    await _prefs!.setBool(_biometricEnabledKey, enabled);
   }
 
-  Future<bool> areNotificationsEnabled() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_notificationsKey) ?? true;
+  static Future<bool> isBiometricEnabled() async {
+    await initialize();
+    return _prefs!.getBool(_biometricEnabledKey) ?? false;
   }
 
-  Future<void> setAutoLogin(bool enabled) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_autoLoginKey, enabled);
+  static Future<void> setLastSyncTime(DateTime time) async {
+    await initialize();
+    await _prefs!.setString(_lastSyncTimeKey, time.toIso8601String());
   }
 
-  Future<bool> isAutoLoginEnabled() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_autoLoginKey) ?? false;
+  static Future<DateTime?> getLastSyncTime() async {
+    await initialize();
+    final timeString = _prefs!.getString(_lastSyncTimeKey);
+    if (timeString != null) {
+      return DateTime.parse(timeString);
+    }
+    return null;
   }
 
   Future<void> setCartAutoSave(bool enabled) async {
